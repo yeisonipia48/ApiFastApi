@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import List, Any
 from sqlalchemy import text
 from dbconexion import Conexion
 
@@ -29,11 +29,11 @@ class UserUpdate(BaseModel):
 db = Conexion(db_user,password,host)
 app = FastAPI()
 @app.get('/')
-def saludo():
+def saludo() -> str:
     return("Hola Ing Yeison Ipia, mucho gusto")
 
 @app.get('/user', response_model=List[Usuarios] )
-def user():
+def user()-> List[dict[str, Any]]:
     
     with db.conexion() as con:
         query = text('select id, name, cedula from users;')
@@ -42,7 +42,7 @@ def user():
         return usuarios
     
 @app.get('/user/search', response_model=Usuarios)
-def search_user(id: int | None = None, cedula: str | None = None):
+def search_user(id: int | None = None, cedula: str | None = None) -> dict[str, Any]:
 
     if id is None and cedula is None:
         raise HTTPException(status_code=400, detail="Debe proporcionar 'id' o 'cedula' para realizar la búsqueda")
@@ -66,7 +66,7 @@ def search_user(id: int | None = None, cedula: str | None = None):
     
 @app.post('/user', status_code=201)
 
-def user_create(usuario: UserCreate):
+def user_create(usuario: UserCreate) -> dict[str,str]:
     with db.conexion() as con:
 
         query = text('insert into users(name, cedula) values(:name, :cedula)')
@@ -76,7 +76,7 @@ def user_create(usuario: UserCreate):
     
 @app.patch('/user/{id}')
 
-def user_partial_update(id:int, usuario: UserUpdate):
+def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
     with db.conexion() as con:
 
         query = text("""update users 
@@ -90,7 +90,7 @@ def user_partial_update(id:int, usuario: UserUpdate):
         return {"message": "Usuario actualizado exitosamente"}
 
 @app.delete('/user/{id}')
-def user_delete(id:int):
+def user_delete(id:int)-> dict[str,str]:
     with db.conexion() as con:
         query = text('delete from users where id = :id')
         result = con.execute(query, {"id":id})
