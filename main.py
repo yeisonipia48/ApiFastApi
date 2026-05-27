@@ -33,7 +33,7 @@ def saludo() -> str:
     return("Hola Ing Yeison Ipia, mucho gusto")
 
 @app.get('/user', response_model=List[Usuarios] )
-def user()-> List[dict[str, Any]]:
+def user(): #-> List[dict[str, Any]]:
     
     with db.conexion() as con:
         query = text('select id, name, cedula from users;')
@@ -76,7 +76,7 @@ def user_create(usuario: UserCreate) -> dict[str,str]:
     
 @app.patch('/user/{id}')
 
-def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
+def user_partial_update(id:int, usuario: UserUpdate): #-> dict[str,str]:
     with db.conexion() as con:
 
         query = text("""update users 
