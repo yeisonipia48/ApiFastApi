@@ -30,8 +30,9 @@ services:
       - postgres_user
       - postgres_password
       - postgres_host
+      - postgres_db
     deploy:
-      replicas: 2
+      replicas: 1
       update_config:
         parallelism: 1
         delay: 5s
@@ -49,6 +50,8 @@ secrets:
   postgres_user:
     external: true
   postgres_host:
+    external: true
+  postgres_db:
     external: true
 
 networks:

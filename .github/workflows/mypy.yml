@@ -20,4 +20,4 @@ jobs:
           pip install mypy fastapi pydantic sqlalchemy psycopg2-binary
 
       - name: Run Mypy
-        run: mypy .  # 👈 Ejecuta el análisis usando la configuración de pyproject.toml
+        run: mypy . --explicit-package-bases # 👈 Ejecuta el análisis usando la configuración de pyproject.toml
