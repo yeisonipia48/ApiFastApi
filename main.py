@@ -76,18 +76,14 @@ def search_user(id: int | None = None, cedula: str | None = None) -> models.User
 
         query = select(models.User)
 
-        if id is not None and cedula is not None:
-            query = query.where(models.User.id == id and models.User.cedula == cedula)
-
         if id is not None:
             query = query.where(models.User.id == id)
 
         if cedula is not None:
             query = query.where(models.User.cedula == cedula)
         
-        query = query.limit(1)
 
-        user = session.scalars(query).first()
+        user = session.scalars(query.limit(1)).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -136,12 +132,11 @@ def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         if usuario.name is not None:
             user_update.name = usuario.name
-            session.commit()
 
         if usuario.cedula is not None:
             user_update.cedula = usuario.cedula
-            session.commit()
 
+        session.commit()
         return {"message":"Usuario actualizado"}
 
 
@@ -166,4 +161,5 @@ def user_delete(id:int)-> dict[str,str]:
         session.delete(user_delete)
         session.commit()
         
-        return {"mesage":"usuario eliminado."}
+        
+        return {"message":"usuario eliminado."}

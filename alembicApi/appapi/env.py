@@ -21,7 +21,7 @@ with open('/run/secrets/postgres_host') as f:
 with open('/run/secrets/postgres_db') as f:
     db = f.read().strip()
 
-url_db = f'postgresql://{db_user}:{password}@{host}:5432/{db}'
+url_db = f'postgresql+psycopg2://{db_user}:{password}@{host}:6432/{db}'
 
 if url_db:
     config.set_main_option("sqlalchemy.url", url_db)
