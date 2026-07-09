@@ -11,5 +11,5 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(70), nullable=False)
     cedula: Mapped[str] = mapped_column(String(12), nullable=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"User: (name: {self.name}, cedula: {self.cedula})"

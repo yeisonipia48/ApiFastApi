@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Any
-from sqlalchemy import text, select, insert
+from typing import List, Any, Sequence
+from sqlalchemy import select
 from dbconexion import Conexion
 from alembicApi import models
 
@@ -30,27 +30,27 @@ class UserUpdate(BaseModel):
     name:str | None = None
     cedula:str | None = None
 
-db = Conexion(db_user,password,host,db)
+dbapi = Conexion(db_user,password,host,db)
 app = FastAPI()
 @app.get('/')
 def saludo() -> str:
     return "Hola Ing Yeison Ipia, mucho gusto"
 
 @app.get('/user', response_model=List[Usuarios] )
-def user()-> List[dict[str, Any]]:
+def user()-> Sequence[models.User]:
     
     """with db.conexion() as con:
         query = text('select id, name, cedula from users;')
         r = con.execute(query).mappings().fetchall()
         usuarios = [dict(row) for row in r]
         return usuarios"""
-    with db.get_session() as session:
+    with dbapi.get_session() as session:
         query = select(models.User)
         users = session.scalars(query).all()
         return users
     
 @app.get('/user/search', response_model=Usuarios)
-def search_user(id: int | None = None, cedula: str | None = None) -> dict[str, Any]:
+def search_user(id: int | None = None, cedula: str | None = None) -> models.User:
 
     if id is None and cedula is None:
         raise HTTPException(status_code=400, detail="Debe proporcionar 'id' o 'cedula' para realizar la búsqueda")
@@ -72,7 +72,7 @@ def search_user(id: int | None = None, cedula: str | None = None) -> dict[str, A
             
     #    return dict(result)
     
-    with db.get_session() as session:
+    with dbapi.get_session() as session:
 
         query = select(models.User)
 
@@ -91,9 +91,7 @@ def search_user(id: int | None = None, cedula: str | None = None) -> dict[str, A
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
         return user
-
 
 @app.post('/user', status_code=201)
 
@@ -104,7 +102,7 @@ def user_create(usuario: UserCreate) -> dict[str,str]:
         con.execute(query, {"name":usuario.name, "cedula": usuario.cedula})
        
         return {"message": "Usuario Creado"}"""
-    with db.get_session() as session:
+    with dbapi.get_session() as session:
         user = models.User(
             name = usuario.name,
             cedula = usuario.cedula
@@ -130,7 +128,7 @@ def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
              
     #    return {"message": "Usuario actualizado exitosamente"}
 
-    with db.get_session() as session:
+    with dbapi.get_session() as session:
 
         user_update = session.get(models.User,id)
 
@@ -158,7 +156,7 @@ def user_delete(id:int)-> dict[str,str]:
         
         return {"message": "Usuario eliminado exitosamente"}"""
     
-    with db.get_session() as session:
+    with dbapi.get_session() as session:
 
         user_delete = session.get(models.User, id)
 
