@@ -1,20 +1,31 @@
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Connection
+from sqlalchemy.orm import Session
 from contextlib import contextmanager
 from typing import Iterator
 
 class Conexion:
-    def __init__(self,user:str, password:str, host:str):
+    def __init__(self,user:str, password:str, host:str, db:str):
         self.user = user
         self.password = password
         self.host = host
+        self.db = db
         self.engine = create_engine(
-            f'postgresql+psycopg2://{user}:{password}@{host}:5432/api')
+            f'postgresql+psycopg2://{user}:{password}@{host}:5432/{db}')
 
     @contextmanager  
-    def conexion(self) -> Iterator[Connection]:
-        with self.engine.begin() as con:
-            yield con
+    def get_session(self) -> Iterator[Session]:
+        
+        session = Session(self.engine)
+
+        try:
+            yield session
+
+            #session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
 
     
