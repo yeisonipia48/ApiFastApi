@@ -29,4 +29,5 @@ class Conexion:
             try:
                 yield session
             except Exception:
-                session.rollback()
+                await session.rollback()
+                raise
