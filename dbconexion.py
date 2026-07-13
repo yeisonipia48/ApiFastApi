@@ -1,6 +1,6 @@
-from sqlalchemy.orm import sessionmaker
+
 from contextlib import asynccontextmanager
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from typing import AsyncIterator
 
 class Conexion:
@@ -15,9 +15,8 @@ class Conexion:
                 "statement_cache_size":0,
                 "prepared_statement_cache_size":0
             })
-        self.async_session_maker = sessionmaker(
+        self.async_session_maker = async_sessionmaker(
             bind=self.engine,
-            class_=AsyncSession,
             expire_on_commit=False
         )
     

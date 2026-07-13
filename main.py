@@ -46,12 +46,11 @@ async def user()-> Sequence[models.User]:
         return usuarios"""
     async with dbapi.get_session() as session:
         query = select(models.User)
-        users = await session.scalars(query)
-        users = users.all()
-        return users
+        result = await session.scalars(query)
+        return result.all()
     
 @app.get('/user/search', response_model=Usuarios)
-async def search_user(id: int | None = None, cedula: str | None = None) -> models.User:
+async def search_user(id: int | None = None, cedula: str | None = None) -> models.User | None:
 
     if id is None and cedula is None:
         raise HTTPException(status_code=400, detail="Debe proporcionar 'id' o 'cedula' para realizar la búsqueda")
@@ -85,11 +84,10 @@ async def search_user(id: int | None = None, cedula: str | None = None) -> model
         
 
         user = await session.scalars(query.limit(1))
-        user = user.first()
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        return user
+        return user.first()
 
 @app.post('/user', status_code=201)
 
@@ -107,9 +105,9 @@ async def user_create(usuario: UserCreate) -> dict[str,str]:
         )
         query = select(models.User).where(models.User.cedula == usuario.cedula)
         result = await session.scalars(query.limit(1))
-        result = result.first()
+        cedula = result.first()
 
-        if result:
+        if cedula:
             raise HTTPException(status_code=400, detail="La cedula que ingreso ya esta en el sistema.")
         session.add(user)
         await session.commit()
