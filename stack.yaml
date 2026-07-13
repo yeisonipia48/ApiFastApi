@@ -21,6 +21,29 @@ services:
         failure_action: rollback
     ports:
       - 5432:5432
+    
+  pgbouncer:
+    image: edoburu/pgbouncer:latest #cualquier imagen oficial/estable
+    networks:
+      - net_api
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: rollback
+    ports:
+      - 6432:6432
+    configs: # Los archivos se distribuyen nativamente en el clúster
+      - source: pgbouncer_config
+        target: /etc/pgbouncer/pgbouncer.ini
+      - source: userlist_config
+        target: /etc/pgbouncer/userlist.txt
+    
   
   api:
     image: api-fast:v1
@@ -40,6 +63,13 @@ services:
         failure_action: rollback
     ports:
       - 8000:8000
+    
+# DEFINICIÓN DE CONFIGURACIONES (Mapea tus archivos locales para que Docker los maneje)
+configs:
+  pgbouncer_config:
+    file: ./pgbouncer.ini
+  userlist_config:
+    file: ./userlist.txt
 
 volumes:
   postgres:

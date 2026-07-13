@@ -9,7 +9,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(70), nullable=False)
-    cedula: Mapped[str] = mapped_column(String(12), nullable=False)
+    cedula: Mapped[str] = mapped_column(String(12), nullable=False, unique=True)
 
     def __repr__(self) -> str:
         return f"User: (name: {self.name}, cedula: {self.cedula})"
