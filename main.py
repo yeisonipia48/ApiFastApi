@@ -37,20 +37,21 @@ def saludo() -> str:
     return "Hola Ing Yeison Ipia, mucho gusto"
 
 @app.get('/user', response_model=List[Usuarios] )
-def user()-> Sequence[models.User]:
+async def user()-> Sequence[models.User]:
     
     """with db.conexion() as con:
         query = text('select id, name, cedula from users;')
         r = con.execute(query).mappings().fetchall()
         usuarios = [dict(row) for row in r]
         return usuarios"""
-    with dbapi.get_session() as session:
+    async with dbapi.get_session() as session:
         query = select(models.User)
-        users = session.scalars(query).all()
+        users = await session.scalars(query)
+        users = users.all()
         return users
     
 @app.get('/user/search', response_model=Usuarios)
-def search_user(id: int | None = None, cedula: str | None = None) -> models.User:
+async def search_user(id: int | None = None, cedula: str | None = None) -> models.User:
 
     if id is None and cedula is None:
         raise HTTPException(status_code=400, detail="Debe proporcionar 'id' o 'cedula' para realizar la búsqueda")
@@ -72,7 +73,7 @@ def search_user(id: int | None = None, cedula: str | None = None) -> models.User
             
     #    return dict(result)
     
-    with dbapi.get_session() as session:
+    async with dbapi.get_session() as session:
 
         query = select(models.User)
 
@@ -83,7 +84,8 @@ def search_user(id: int | None = None, cedula: str | None = None) -> models.User
             query = query.where(models.User.cedula == cedula)
         
 
-        user = session.scalars(query.limit(1)).first()
+        user = await session.scalars(query.limit(1))
+        user = user.first()
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -91,27 +93,32 @@ def search_user(id: int | None = None, cedula: str | None = None) -> models.User
 
 @app.post('/user', status_code=201)
 
-def user_create(usuario: UserCreate) -> dict[str,str]:
+async def user_create(usuario: UserCreate) -> dict[str,str]:
     """with db.conexion() as con:
 
         query = text('insert into users(name, cedula) values(:name, :cedula)')
         con.execute(query, {"name":usuario.name, "cedula": usuario.cedula})
        
         return {"message": "Usuario Creado"}"""
-    with dbapi.get_session() as session:
+    async with dbapi.get_session() as session:
         user = models.User(
             name = usuario.name,
             cedula = usuario.cedula
         )
+        query = select(models.User).where(models.User.cedula == usuario.cedula)
+        result = await session.scalars(query.limit(1))
+        result = result.first()
 
+        if result:
+            raise HTTPException(status_code=400, detail="La cedula que ingreso ya esta en el sistema.")
         session.add(user)
-        session.commit()
+        await session.commit()
         return {"message": "Usuario Creado"}
 
     
 @app.patch('/user/{id}')
 
-def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
+async def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
     #with db.conexion() as con:
 
     #    query = text("""update users 
@@ -124,9 +131,9 @@ def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
              
     #    return {"message": "Usuario actualizado exitosamente"}
 
-    with dbapi.get_session() as session:
+    async with dbapi.get_session() as session:
 
-        user_update = session.get(models.User,id)
+        user_update = await session.get(models.User,id)
 
         if not user_update:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -136,12 +143,12 @@ def user_partial_update(id:int, usuario: UserUpdate) -> dict[str,str]:
         if usuario.cedula is not None:
             user_update.cedula = usuario.cedula
 
-        session.commit()
+        await session.commit()
         return {"message":"Usuario actualizado"}
 
 
 @app.delete('/user/{id}')
-def user_delete(id:int)-> dict[str,str]:
+async def user_delete(id:int)-> dict[str,str]:
     """with db.conexion() as con:
         query = text('delete from users where id = :id')
         result = con.execute(query, {"id":id})
@@ -151,15 +158,15 @@ def user_delete(id:int)-> dict[str,str]:
         
         return {"message": "Usuario eliminado exitosamente"}"""
     
-    with dbapi.get_session() as session:
+    async with dbapi.get_session() as session:
 
-        user_delete = session.get(models.User, id)
+        user_delete = await session.get(models.User, id)
 
         if not user_delete:
             raise HTTPException(status_code=404, detail="Usuario no encontrado.")
         
-        session.delete(user_delete)
-        session.commit()
+        await session.delete(user_delete)
+        await session.commit()
         
         
         return {"message":"usuario eliminado."}

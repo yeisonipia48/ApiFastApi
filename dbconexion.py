@@ -1,32 +1,32 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-from contextlib import contextmanager
-from typing import Iterator
-from sqlalchemy.pool import NullPool
+from sqlalchemy.orm import sessionmaker
+from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from typing import AsyncIterator
+
 class Conexion:
-    def __init__(self,user:str, password:str, host:str, db:str):
+    def __init__(self, user:str, password:str, host:str, db:str) -> None:
         self.user = user
         self.password = password
         self.host = host
         self.db = db
-        self.engine = create_engine(
-            f'postgresql+psycopg2://{user}:{password}@{host}:6432/{db}', poolclass=NullPool)
-        #desactivamos el pool de sqlalchemy para que trabaje directamente con pgbouncer
-
-    @contextmanager  
-    def get_session(self) -> Iterator[Session]:
-        
-        session = Session(self.engine)
-
-        try:
-            yield session
-
-            #session.commit()
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
-
-
+        self.engine = create_async_engine(
+            f'postgresql+asyncpg://{user}:{password}@{host}:6432/{db}',
+            connect_args = {
+                "statement_cache_size":0,
+                "prepared_statement_cache_size":0
+            })
+        self.async_session_maker = sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
     
+    @asynccontextmanager
+
+    async def get_session(self) -> AsyncIterator[AsyncSession]:
+
+        async with self.async_session_maker() as session:
+            try:
+                yield session
+            except Exception:
+                session.rollback()
