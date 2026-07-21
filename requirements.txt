@@ -4,3 +4,4 @@ fastapi
 psycopg2-binary
 alembic
 asyncpg
+python-multipart
