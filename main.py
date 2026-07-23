@@ -1,13 +1,12 @@
 from fastapi import FastAPI, HTTPException, status, Depends
 from schemas import Usuarios, UserUpdate, UserCreate
-from typing import List, AsyncIterator, Sequence
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Sequence
 from repository import UserRepository
 from alembicApi import models
 
 app = FastAPI()
 @app.get('/')
-def saludo() -> str:
+async def saludo() -> str:
     return "Hola Ing Yeison Ipia, mucho gusto"
 
 @app.get('/users', response_model=List[Usuarios])

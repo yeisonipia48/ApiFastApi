@@ -5,7 +5,7 @@ from sqlalchemy import  select
 from alembicApi import models
 from schemas import UserCreate, UserUpdate
 from dbconexion import Conexion
-from typing import AsyncIterator, Sequence
+from typing import AsyncGenerator, Sequence
 
 with open('/run/secrets/postgres_user') as f:
     db_user = f.read().strip()
@@ -21,7 +21,7 @@ with open('/run/secrets/postgres_db') as f:
 
 dbapi = Conexion(db_user,password,host,db)
 
-async def get_conexion() -> AsyncIterator[AsyncSession]:
+async def get_conexion() -> AsyncGenerator[AsyncSession, None]:
     async with dbapi.get_session() as session:
         yield session
 
