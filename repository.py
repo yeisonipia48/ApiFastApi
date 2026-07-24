@@ -39,7 +39,7 @@ class UserRepository:
     async def get_all(self) -> List[models.User]:
         query = select(models.User)
         users = await self.session.scalars(query)
-        return users.all()
+        return list(users.all())
     
     async def get_by_id(self, id:int) -> models.User | None:
         user = await self.session.get(models.User, id)

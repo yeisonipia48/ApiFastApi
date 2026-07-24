@@ -6,9 +6,10 @@ from typing import List
 from repository import UserRepository, get_con
 from alembicApi import models
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     await get_con().engine.dispose()
 
