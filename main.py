@@ -1,16 +1,32 @@
 from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
 from schemas import Usuarios, UserUpdate, UserCreate
-from typing import List, Sequence
-from repository import UserRepository
+from typing import List
+from repository import UserRepository, get_con
 from alembicApi import models
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await get_con().engine.dispose()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Error interno del servidor"},
+    )
+
 @app.get('/')
 async def saludo() -> str:
     return "Hola Ing Yeison Ipia, mucho gusto"
 
 @app.get('/users', response_model=List[Usuarios])
-async def users(repo: UserRepository = Depends()) -> Sequence[models.User]:
+async def users(repo: UserRepository = Depends()) -> List[models.User]:
     return await repo.get_all()
     
 @app.get('/users/{id}', response_model=Usuarios)
@@ -23,7 +39,6 @@ async def get_user_by_id(id:int, repo: UserRepository = Depends()) -> models.Use
     return user
     
 @app.post('/users', status_code=status.HTTP_201_CREATED, response_model=Usuarios)
-
 async def user_create(usuario: UserCreate, repo: UserRepository = Depends()) -> models.User:
     cedula = await repo.get_by_cedula(usuario.cedula)
     if cedula:
@@ -34,7 +49,6 @@ async def user_create(usuario: UserCreate, repo: UserRepository = Depends()) -> 
 
     
 @app.patch('/users/{id}', response_model=Usuarios)
-
 async def user_partial_update(id:int, usuario: UserUpdate, repo: UserRepository = Depends()) -> models.User:
     user_update = await repo.update(id, usuario)
     if not user_update:

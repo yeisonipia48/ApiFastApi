@@ -1,28 +1,34 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from sqlalchemy import  select
+from functools import lru_cache
+from sqlalchemy import select
 from alembicApi import models
 from schemas import UserCreate, UserUpdate
 from dbconexion import Conexion
-from typing import AsyncGenerator, Sequence
+from typing import AsyncGenerator, List
 
-with open('/run/secrets/postgres_user') as f:
-    db_user = f.read().strip()
 
-with open('/run/secrets/postgres_password') as f:
-    password = f.read().strip()
+@lru_cache
+def _get_con() -> Conexion:
+    with open('/run/secrets/postgres_user') as f:
+        db_user = f.read().strip()
 
-with open('/run/secrets/postgres_host') as f:
-    host = f.read().strip()
+    with open('/run/secrets/postgres_password') as f:
+        password = f.read().strip()
 
-with open('/run/secrets/postgres_db') as f:
-    db = f.read().strip()
+    with open('/run/secrets/postgres_host') as f:
+        host = f.read().strip()
 
-dbapi = Conexion(db_user,password,host,db)
+    with open('/run/secrets/postgres_db') as f:
+        db = f.read().strip()
+    return Conexion(db_user,password,host,db)
+
+def get_con() -> Conexion:
+    return _get_con()
 
 async def get_conexion() -> AsyncGenerator[AsyncSession, None]:
-    async with dbapi.get_session() as session:
+    async with get_con().get_session() as session:
         yield session
 
 class UserRepository:
@@ -30,7 +36,7 @@ class UserRepository:
     def __init__(self, session: AsyncSession = Depends(get_conexion)):
         self.session = session
     
-    async def get_all(self) -> Sequence[models.User]:
+    async def get_all(self) -> List[models.User]:
         query = select(models.User)
         users = await self.session.scalars(query)
         return users.all()
